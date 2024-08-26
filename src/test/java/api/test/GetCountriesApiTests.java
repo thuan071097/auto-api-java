@@ -80,13 +80,6 @@ public class GetCountriesApiTests {
     }
 
     static Stream<Country> countriesProvider() throws JsonProcessingException {
-//        List<Country> countries = new ArrayList<>();
-//        Country vietNam = new Country("Viet Nam", "VN");
-//        Country usa = new Country("USA", "US");
-//        Country canada = new Country("Canada", "CA");
-//        countries.add(vietNam);
-//        countries.add(usa);
-//        countries.add(canada);
         ObjectMapper mapper = new ObjectMapper();
         List<Country> countries = mapper.<List<Country>>readValue(GetCountriesData.ALL_COUNTRIES, new TypeReference<List<Country>>() {
         });
