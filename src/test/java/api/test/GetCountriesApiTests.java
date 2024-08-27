@@ -89,15 +89,6 @@ public class GetCountriesApiTests {
     @ParameterizedTest
     @MethodSource("countriesProvider")
     void  VerifyGetCountryByCodeApiReturnCorrectData (Country country) {
-//        List<Country> countries = new ArrayList<>();
-//        Country vietNam = new Country("Viet Nam", "VN");
-//        Country usa = new Country("USA", "US");
-//        Country canada = new Country("Canada", "CA");
-//        countries.add(vietNam);
-//        countries.add(usa);
-//        countries.add(canada);
-//        for (Country country : countries){
-
             Map<String, String> params = new HashMap<>();
             params.put("code", country.getCode());
             Response actualResponse = RestAssured.given().log().all()
