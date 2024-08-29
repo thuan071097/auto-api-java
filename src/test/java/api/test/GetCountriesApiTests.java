@@ -12,15 +12,20 @@ import io.restassured.response.Response;
 import jdk.javadoc.doclet.Reporter;
 import org.codehaus.groovy.ast.expr.UnaryMinusExpression;
 import org.codehaus.groovy.classgen.asm.BinaryIntExpressionHelper;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import javax.crypto.MacSpi;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -105,70 +110,38 @@ public class GetCountriesApiTests {
             assertThat(String.format("Actual: %s\n Expected: %s\n", actualResponseBody, country), actualResponseBody, jsonEquals(country));
     }
 
-    @Test
-    void verifyGetCountriesApiReturnCorrectDataWhenGivenLessThanOperator(){
-        String path = String.format("%s?gdp=5000&operator=<", GET_COUNTRY_BY_FILTER);
-        Response actualResponse = RestAssured.given().log().all()
-                .get(path);
-        assertThat(200, equalTo(actualResponse.statusCode()));
-        List<CountryVersionTwo> countries = actualResponse.as(new TypeRef<List<CountryVersionTwo>>() {
-            });
-        countries.forEach(country -> assertThat(country.getGdp(), lessThan(5000f)));
+    static Stream<Map<String, String>> getCountriesByFilterProvider() throws JsonProcessingException {
+        List<Map<String, String>> inputs = new ArrayList<>();
+        inputs.add(Map.of("gdp", "5000", "operator", ">"));
+        inputs.add(Map.of("gdp", "5000", "operator", "<"));
+        inputs.add(Map.of("gdp", "5000", "operator", ">="));
+        inputs.add(Map.of("gdp", "5000", "operator", "<="));
+        inputs.add(Map.of("gdp", "5000", "operator", "=="));
+        inputs.add(Map.of("gdp", "5000", "operator", "!="));
+        return inputs.stream();
     }
 
-    @Test
-    void verifyGetCountriesApiReturnCorrectDataWhenGivenGreaterThanOperator(){
-        String path = String.format("%s?gdp=5000&operator=>", GET_COUNTRY_BY_FILTER);
+    @ParameterizedTest
+    @MethodSource("getCountriesByFilterProvider")
+    void verifyGetCountriesApiReturnCorrectDataWithCorrespondingFilter(Map<String, String> queryParams) {
         Response actualResponse = RestAssured.given().log().all()
-                .get(path);
-        assertThat(200, equalTo(actualResponse.statusCode()));
-        List<CountryVersionTwo> countries = actualResponse.as(new TypeRef<List<CountryVersionTwo>>() {
-        });
-        countries.forEach(country -> assertThat(country.getGdp(), greaterThan(5000f)));
-    }
-
-    @Test
-    void verifyGetCountriesApiReturnCorrectDataWhenGivenEqualOperator() {
-        Response actualResponse = RestAssured.given().log().all()
-                .queryParam("gdp", "5000")
-                .queryParam("operator", "==")
+                .queryParams(queryParams)
                 .get(GET_COUNTRY_BY_FILTER);
         assertThat(200, equalTo(actualResponse.statusCode()));
         List<CountryVersionTwo> countries = actualResponse.as(new TypeRef<List<CountryVersionTwo>>() {
         });
-        countries.forEach(country -> assertThat(country.getGdp(), equalTo(5000f)));
-    }
-
-    @Test
-    void verifyGetCountriesApiReturnCorrectDataWhenGivenLessThanOrEqualOperator(){
-        String path = String.format("%s?gdp=5000&operator=<=", GET_COUNTRY_BY_FILTER);
-        Response actualResponse = RestAssured.given().log().all()
-                .get(path);
-        assertThat(200, equalTo(actualResponse.statusCode()));
-        List<CountryVersionTwo> countries = actualResponse.as(new TypeRef<List<CountryVersionTwo>>() {
+        countries.forEach(country -> {
+            float actualGdp = Float.parseFloat(queryParams.get("gdp"));
+            Matcher<Float> marcher = switch (queryParams.get("operator")){
+                case ">" -> greaterThan(actualGdp);
+                case "<" -> lessThan(actualGdp);
+                case "<=" -> lessThanOrEqualTo(actualGdp);
+                case ">=" -> greaterThanOrEqualTo(actualGdp);
+                case "==" -> equalTo(actualGdp);
+                case "!=" -> not(equalTo(actualGdp));
+                default -> equalTo(actualGdp);
+            };
+            assertThat(country.getGdp(), marcher);
         });
-        countries.forEach(country -> assertThat(country.getGdp(), lessThanOrEqualTo(5000f)));
-    }
-
-    @Test
-    void verifyGetCountriesApiReturnCorrectDataWhenGivenGreaterThanOrEqualOperator(){
-        String path = String.format("%s?gdp=5000&operator=>=", GET_COUNTRY_BY_FILTER);
-        Response actualResponse = RestAssured.given().log().all()
-                .get(path);
-        assertThat(200, equalTo(actualResponse.statusCode()));
-        List<CountryVersionTwo> countries = actualResponse.as(new TypeRef<List<CountryVersionTwo>>() {
-        });
-        countries.forEach(country -> assertThat(country.getGdp(), greaterThanOrEqualTo(5000f)));
-    }
-
-    @Test
-    void verifyGetCountriesApiReturnCorrectDataWhenGivenGreaterNotEqualOperator(){
-        String path = String.format("%s?gdp=5000&operator=!=", GET_COUNTRY_BY_FILTER);
-        Response actualResponse = RestAssured.given().log().all()
-                .get(path);
-        assertThat(200, equalTo(actualResponse.statusCode()));
-        List<CountryVersionTwo> countries = actualResponse.as(new TypeRef<List<CountryVersionTwo>>() {
-        });
-        countries.forEach(country -> assertThat(country.getGdp(), not(equalTo(5000f))));
     }
 }
