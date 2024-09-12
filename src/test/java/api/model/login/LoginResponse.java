@@ -13,4 +13,5 @@ import lombok.Setter;
 public class LoginResponse {
     private String token;
     private int timeout;
+    private String message;
 }
