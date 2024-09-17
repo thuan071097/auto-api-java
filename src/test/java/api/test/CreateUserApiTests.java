@@ -14,6 +14,7 @@ import io.restassured.response.Response;
 import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -40,22 +41,31 @@ public class CreateUserApiTests {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static List<String> createdUserIds = new ArrayList<>();
     private static String TOKEN = "";
+    private static long TIMEOUT = -1;
+    private static long TIME_BEFORE_GET_TOKEN = -1;
 
     @BeforeAll
     static void setUp(){
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = 3000;
+    }
 
-        //Get token
-        LoginInput loginInput = new LoginInput("staff", "1234567890");
-        Response actualResponse = RestAssured.given().log().all()
-                .header("Content-Type", "application/json")
-                .body(loginInput)
-                .post(LOGIN_PATH);
-        assertThat(actualResponse.statusCode(), equalTo(200));
-        LoginResponse loginResponse = actualResponse.as(LoginResponse.class);
-        assertThat(loginResponse.getToken(), not(blankString()));
-        TOKEN = "Bearer ".concat(loginResponse.getToken());
+    @BeforeEach
+    void beforeEach(){
+        if (TIMEOUT==-1 || (System.currentTimeMillis() - TIME_BEFORE_GET_TOKEN) > TIMEOUT * 0.8){
+           //Get token
+            LoginInput loginInput = new LoginInput("staff", "1234567890");
+            TIME_BEFORE_GET_TOKEN = System.currentTimeMillis();
+            Response actualResponse = RestAssured.given().log().all()
+                    .header("Content-Type", "application/json")
+                    .body(loginInput)
+                    .post(LOGIN_PATH);
+            assertThat(actualResponse.statusCode(), equalTo(200));
+            LoginResponse loginResponse = actualResponse.as(LoginResponse.class);
+            assertThat(loginResponse.getToken(), not(blankString()));
+            TOKEN = "Bearer ".concat(loginResponse.getToken());
+            TIMEOUT = loginResponse.getTimeout();
+        }
     }
 
     @Test
