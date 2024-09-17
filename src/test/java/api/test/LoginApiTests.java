@@ -63,11 +63,16 @@ public class LoginApiTests {
 
     static Stream<Arguments> loginProvider(){
         return Stream.of(
-                Arguments.of(new LoginInput("staff1", "1234567890"), 401, "Invalid credentials"), // Invalid username, Valid password
-                Arguments.of(new LoginInput("staff", "12345678901"), 401, "Invalid credentials"), // Valid username, Invalid password
-                Arguments.of(new LoginInput("staff2", "12345678901"), 401, "Invalid credentials"), //Invalid username, Invalid password
-                Arguments.of(new LoginInput(null, "1234567890"), 401, "Invalid credentials"), //Required field - null
-                Arguments.of(new LoginInput("staff", ""), 401, "Invalid credentials") //Required field - empty
+                Arguments.of(new LoginInput("staff1", "1234567890")
+                        , 401, "Invalid credentials"), // Invalid username, Valid password
+                Arguments.of(new LoginInput("staff", "12345678901")
+                        , 401, "Invalid credentials"), // Valid username, Invalid password
+                Arguments.of(new LoginInput("staff2", "12345678901")
+                        , 401, "Invalid credentials"), //Invalid username, Invalid password
+                Arguments.of(new LoginInput(null, "1234567890")
+                        , 401, "Invalid credentials"), //Required field - null
+                Arguments.of(new LoginInput("staff", "")
+                        , 401, "Invalid credentials") //Required field - empty
         );
     }
 
