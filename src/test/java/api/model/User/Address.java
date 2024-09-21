@@ -1,5 +1,6 @@
 package api.model.User;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 @NoArgsConstructor
@@ -7,7 +8,7 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Address {
     private String streetNumber;
     private String street;
