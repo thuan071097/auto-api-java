@@ -1,5 +1,6 @@
 package api.test;
 
+import api.common.RestAssuredSetUp;
 import api.model.country.Country;
 import api.model.login.LoginInput;
 import api.model.login.LoginResponse;
@@ -39,8 +40,7 @@ public class LoginApiTests {
 
     @BeforeAll
     static void setUp(){
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = 3000;
+        RestAssuredSetUp.setUp();
     }
 
     @Test

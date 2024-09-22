@@ -1,5 +1,8 @@
 package api.test;
 
+import api.common.DatabaseConnection;
+import api.common.LoginUtils;
+import api.common.RestAssuredSetUp;
 import api.model.User.*;
 import api.model.User.dto.DbAddress;
 import api.model.User.dto.DbUser;
@@ -37,58 +40,30 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static api.common.ConstantUtils.*;
 import static net.javacrumbs.jsonunit.JsonMatchers.jsonEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.text.IsBlankString.blankString;
 
 public class CreateUserApiTests {
-    private static final String LOGIN_PATH = "/api/login";
-    private static final String CREATE_USER_PATH = "/api/user";
-    private static final String DELETE_USER_PATH = "/api/user/{id}";
-    private static final String GET_USER_PATH = "/api/user/{id}";
-    private static final String AUTHORIZATION_HEADER = "Authorization";
     private static List<String> createdUserIds = new ArrayList<>();
     private static String TOKEN = "";
     private static long TIMEOUT = -1;
     private static long TIME_BEFORE_GET_TOKEN = -1;
-    private static SessionFactory sessionFactory;
+    private static SessionFactory sessionFactory = DatabaseConnection.getSession();
 
     @BeforeAll
     static void setUp(){
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = 3000;
-
-        // A SessionFactory is set up once for an application!
-        final StandardServiceRegistry registry =
-                new StandardServiceRegistryBuilder()
-                        .build();
-        try {
-            sessionFactory  = new MetadataSources(registry)
-                            .addAnnotatedClass(DbUser.class)
-                            .addAnnotatedClass(DbAddress.class)
-                            .buildMetadata()
-                            .buildSessionFactory();
-        }
-        catch (Exception e) {
-            // The registry would be destroyed by the SessionFactory, but we
-            // had trouble building the SessionFactory so destroy it manually.
-            StandardServiceRegistryBuilder.destroy(registry);
-        }
+        RestAssuredSetUp.setUp();
     }
 
     @BeforeEach
     void beforeEach(){
         if (TIMEOUT==-1 || (System.currentTimeMillis() - TIME_BEFORE_GET_TOKEN) > TIMEOUT * 0.8){
            //Get token
-            LoginInput loginInput = new LoginInput("staff", "1234567890");
             TIME_BEFORE_GET_TOKEN = System.currentTimeMillis();
-            Response actualResponse = RestAssured.given().log().all()
-                    .header("Content-Type", "application/json")
-                    .body(loginInput)
-                    .post(LOGIN_PATH);
-            assertThat(actualResponse.statusCode(), equalTo(200));
-            LoginResponse loginResponse = actualResponse.as(LoginResponse.class);
+            LoginResponse loginResponse = LoginUtils.login();
             assertThat(loginResponse.getToken(), not(blankString()));
             TOKEN = "Bearer ".concat(loginResponse.getToken());
             TIMEOUT = loginResponse.getTimeout();
@@ -149,38 +124,8 @@ public class CreateUserApiTests {
             });
         });
     }
-//        Response getCreatedUserResponse = RestAssured.given().log().all()
-//                .header(AUTHORIZATION_HEADER, TOKEN)
-//                .pathParam("id", actual.getId())
-//                .get(GET_USER_PATH);
-//        System.out.printf("Create user response: %s%n", createUserResponse.asString());
-//        assertThat(getCreatedUserResponse.statusCode(), equalTo(200));
-//        // Verify schema
-//        ObjectMapper mapper = new ObjectMapper();
-//        GetUserResponse<AddressResponse> expectedUser = mapper.convertValue(user, new TypeReference<GetUserResponse<AddressResponse>>() {
-//        });
-//        expectedUser.setId(actual.getId());
-//        expectedUser.getAddresses().get(0).setCustomerId(actual.getId());
-//
-//        String actualGetCreated = getCreatedUserResponse.asString();
-//        assertThat(actualGetCreated, jsonEquals(expectedUser).whenIgnoringPaths("createdAt", "updatedAt",
-//                "addresses[*].id", "addresses[*].createdAt", "addresses[*].updatedAt"));
-//        GetUserResponse<AddressResponse> actualGetCreatedModel = getCreatedUserResponse.as(new TypeRef<GetUserResponse<AddressResponse>>() {
-//        });
-//        Instant userCreatedAt = Instant.parse(actualGetCreatedModel.getCreatedAt());
-//        datetimeVerifier(beforeExecution, userCreatedAt);
-//        Instant userUpdatedAt = Instant.parse(actualGetCreatedModel.getUpdatedAt());
-//        datetimeVerifier(beforeExecution, userUpdatedAt);
-//        actualGetCreatedModel.getAddresses().forEach(actualAddress -> {
-//            assertThat(actualAddress.getId(), not(blankString()));
-//            Instant addressCreatedAt = Instant.parse(actualAddress.getCreatedAt());
-//            datetimeVerifier(beforeExecution, addressCreatedAt);
-//            Instant addressUpdatedAt = Instant.parse(actualAddress.getCreatedAt());
-//            datetimeVerifier(beforeExecution, addressUpdatedAt);
-//        });
 
-
-    /*@Test
+    @Test
     void verifyStaffCreateUserSuccessfully(){
         Address address = Address.getDefault();
         User<Address> user = User.getDefault();
@@ -230,9 +175,9 @@ public class CreateUserApiTests {
             Instant addressUpdatedAt = Instant.parse(actualAddress.getCreatedAt());
             datetimeVerifier(beforeExecution, addressUpdatedAt);
         });
-    }*/
+    }
 
-   /* @Test
+    @Test
     void verifyStaffCreateUserWithMultipleAddressSuccessfully(){
         Address address1 = Address.getDefault();
         Address address2 = Address.getDefault();
@@ -285,9 +230,9 @@ public class CreateUserApiTests {
             Instant addressUpdatedAt = Instant.parse(actualAddress.getCreatedAt());
             datetimeVerifier(beforeExecution, addressUpdatedAt);
         });
-    }*/
+    }
 
-    /*static Stream<Arguments> validationUserProvider() throws JsonProcessingException {
+    static Stream<Arguments> validationUserProvider() throws JsonProcessingException {
         List<Arguments> argumentsList = new ArrayList<>();
         User<Address> user = User.getDefaultWithEmail();
 
@@ -440,9 +385,9 @@ public class CreateUserApiTests {
                 new ValidationResponse("/addresses/0/country", "must NOT have fewer than 2 characters")));
 
         return argumentsList.stream();
-    }*/
+    }
 
-    /*@ParameterizedTest()
+    @ParameterizedTest()
     @MethodSource("validationUserProvider")
     void verifyRequiredFieldsWhenCreatingUser(String testcase, User<Address> user, ValidationResponse expectedResponse){
         Response createUserResponse = RestAssured.given().log().all()
@@ -454,7 +399,7 @@ public class CreateUserApiTests {
         assertThat(createUserResponse.statusCode(), equalTo(400));
         ValidationResponse actual = createUserResponse.as(ValidationResponse.class);
         assertThat(actual, samePropertyValuesAs(expectedResponse));
-    }*/
+    }
 
 
     private void datetimeVerifier(Instant timeBeforeExecution, Instant actualTime) {
@@ -470,5 +415,6 @@ public class CreateUserApiTests {
                     .pathParam("id", id)
                     .delete(DELETE_USER_PATH);
         });
+        sessionFactory.close();
     }
 }
