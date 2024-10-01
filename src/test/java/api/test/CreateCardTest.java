@@ -1,55 +1,19 @@
 package api.test;
 
-import api.common.DatabaseConnection;
-import api.common.LoginUtils;
-import api.common.RestAssuredSetUp;
-import api.common.StubServer;
 import api.model.User.*;
-import api.model.login.LoginResponse;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.hibernate.SessionFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 import static api.common.ConstantUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.text.IsBlankString.blankString;
 
-public class CreateCardTest {
-    private static List<String> createdUserIds = new ArrayList<>();
-    private static String TOKEN = "";
-    private static long TIMEOUT = -1;
-    private static long TIME_BEFORE_GET_TOKEN = -1;
-    private static SessionFactory sessionFactory = DatabaseConnection.getSession();
-
-    @BeforeAll
-    static void setUp(){
-        RestAssuredSetUp.setUp();
-        StubServer.startStubServer();
-    }
-
-    @BeforeEach
-    void beforeEach(){
-        if (TIMEOUT==-1 || (System.currentTimeMillis() - TIME_BEFORE_GET_TOKEN) > TIMEOUT * 0.8){
-            //Get token
-            TIME_BEFORE_GET_TOKEN = System.currentTimeMillis();
-            LoginResponse loginResponse = LoginUtils.login();
-            assertThat(loginResponse.getToken(), not(blankString()));
-            TOKEN = "Bearer ".concat(loginResponse.getToken());
-            TIMEOUT = loginResponse.getTimeout();
-        }
-    }
+public class CreateCardTest extends MasterTest {
 
     @ParameterizedTest()
     @ValueSource(strings = { "SLIVER", "GOLD", "PLATINUM" })
@@ -83,14 +47,4 @@ public class CreateCardTest {
         assertThat(cardResponseActual, samePropertyValuesAs(cardResponseExpected));
     }
 
-    @AfterAll
-    static void tearDown(){
-        createdUserIds.forEach(id -> {
-            RestAssured.given().log().all()
-                    .header(AUTHORIZATION_HEADER, TOKEN)
-                    .pathParam("id", id)
-                    .delete(DELETE_USER_PATH);
-        });
-        sessionFactory.close();
-    }
 }
