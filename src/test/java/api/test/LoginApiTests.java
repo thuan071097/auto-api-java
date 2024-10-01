@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static api.common.ConfigUtils.getDotenv;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 import static net.javacrumbs.jsonunit.JsonMatchers.jsonEquals;
 import static net.javacrumbs.jsonunit.JsonMatchers.jsonPartMatches;
@@ -45,7 +46,7 @@ public class LoginApiTests {
 
     @Test
     void verifyStaffLoginSuccessfully(){
-        LoginInput loginInput = new LoginInput("staff", "1234567890");
+        LoginInput loginInput = new LoginInput(getDotenv().get("username"), getDotenv().get("password"));
         Response actualResponse = RestAssured.given().log().all()
                 .header("Content-Type", "application/json")
                 .body(loginInput)

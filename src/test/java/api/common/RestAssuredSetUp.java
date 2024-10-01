@@ -2,9 +2,12 @@ package api.common;
 
 import io.restassured.RestAssured;
 
+import static api.common.ConstantUtils.BASE_PORT;
+import static api.common.ConstantUtils.BASE_URL;
+
 public class RestAssuredSetUp {
     public static void setUp (){
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = 3000;
+        RestAssured.baseURI = BASE_URL;
+        RestAssured.port = BASE_PORT;
     }
 }
